@@ -1,6 +1,7 @@
 
 import streamlit as st
 import pandas as pd
+from tab_numeric.display import display_numeric_tab
 
 # Configure the application
 st.set_page_config(
@@ -29,21 +30,21 @@ if uploaded_file is not None:
         st.error(f"Unable to read CSV file: {e}")
 
     else:
-        tab1, tab2, tab3, tab4 = st.tabs([
+        tab_df, tab_numeric, tab_text, tab_datetime = st.tabs([
             "DataFrame",
             "Numeric Serie",
             "Text Serie",
             "Datetime Serie"
         ])
 
-        with tab1:
+        with tab_df:
             st.info("DataFrame analysis coming soon.")
 
-        with tab2:
-            st.info("Numeric analysis coming soon.")
+        with tab_numeric:
+            display_numeric_tab(df)
 
-        with tab3:
+        with tab_text:
             st.info("Text analysis coming soon.")
 
-        with tab4:
+        with tab_datetime:
             st.info("Datetime analysis coming soon.")
