@@ -1,15 +1,13 @@
 import sys
 from pathlib import Path
 
-# Let Python find the tab_* folders, which sit next to app/.
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-import streamlit as st  # noqa: E402
-import pandas as pd  # noqa: E402
-from tab_df.display import display_df_tab  # noqa: E402
-from tab_numeric.display import display_numeric_tab  # noqa: E402
+import streamlit as st
+import pandas as pd
+from tab_df.display import display_df_tab
+from tab_numeric.display import display_numeric_tab
 
-# Configure the application
 st.set_page_config(
     page_title="CSV Explorer",
     layout="wide"
@@ -17,7 +15,6 @@ st.set_page_config(
 
 st.title("CSV Explorer")
 
-# Upload a CSV file
 with st.expander(
     "Streamlit application for performing data exploration on a CSV",
     expanded=True
@@ -27,7 +24,6 @@ with st.expander(
         type=["csv"]
     )
 
-# Display the four tabs after uploading a CSV
 if uploaded_file is not None:
     try:
         df = pd.read_csv(uploaded_file)

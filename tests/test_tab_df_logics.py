@@ -1,9 +1,3 @@
-"""Unit tests for tab_df/logics.py.
-
-Run from the project root with:
-    python -m pytest tests -v
-"""
-
 import io
 
 import numpy as np
@@ -13,12 +7,8 @@ import pytest
 from tab_df.logics import EXPLORATION_METHODS, Dataset, format_bytes, simple_type
 
 
-# ---------------------------------------------------------------------- #
-# Fixtures
-# ---------------------------------------------------------------------- #
 @pytest.fixture
 def sample_df() -> pd.DataFrame:
-    """Small DataFrame with one duplicate row and two rows with missing values."""
     return pd.DataFrame(
         {
             "name": ["Ann", "Bob", "Cat", "Ann", None, "Dan"],
@@ -34,13 +24,9 @@ def dataset(sample_df: pd.DataFrame) -> Dataset:
 
 
 def _csv_bytes(text: str, encoding: str = "utf-8") -> io.BytesIO:
-    """Simulate an uploaded file, as Streamlit's file_uploader returns."""
     return io.BytesIO(text.encode(encoding))
 
 
-# ---------------------------------------------------------------------- #
-# Loading
-# ---------------------------------------------------------------------- #
 class TestLoading:
     def test_loads_utf8_csv(self):
         ds = Dataset(_csv_bytes("a,b\n1,x\n2,y\n"))
@@ -66,15 +52,12 @@ class TestLoading:
         assert Dataset.from_dataframe(pd.DataFrame()).is_df_none()
 
 
-# ---------------------------------------------------------------------- #
-# Summary table
-# ---------------------------------------------------------------------- #
 class TestSummary:
     def test_counts(self, dataset):
         assert dataset.get_n_rows() == 6
         assert dataset.get_n_cols() == 3
-        assert dataset.get_n_duplicates() == 1  # row 3 repeats row 0
-        assert dataset.get_n_missing() == 2  # rows 2 and 4
+        assert dataset.get_n_duplicates() == 1
+        assert dataset.get_n_missing() == 2
 
     def test_summary_table_layout(self, dataset):
         summary = dataset.get_summary_df()
@@ -85,9 +68,6 @@ class TestSummary:
         assert Dataset().get_summary_df()["Value"].tolist() == [0, 0, 0, 0]
 
 
-# ---------------------------------------------------------------------- #
-# Column information
-# ---------------------------------------------------------------------- #
 class TestColumns:
     def test_cols_dtype_lists_every_column_then_index(self, dataset):
         table = dataset.get_cols_dtype()
@@ -102,7 +82,7 @@ class TestColumns:
 
     def test_column_profile_missing_percentage(self, dataset):
         profile = dataset.get_column_profile().set_index("Column")
-        assert profile.loc["age", "Missing %"] == "16.7%"  # 1 of 6
+        assert profile.loc["age", "Missing %"] == "16.7%"
         assert profile.loc["joined", "Missing %"] == "0.0%"
 
     def test_type_counts(self, dataset):
@@ -118,9 +98,9 @@ class TestSimpleType:
             ([True, False], "Boolean"),
             (["2024-01-01", "2024-12-31"], "Date"),
             (["apple", "banana"], "Text"),
-            (["2024", "2025"], "Text"),  # digit-only codes are not dates
-            ([None, None], "Text"),  # empty column
-            (["", "  "], "Text"),  # blank strings only
+            (["2024", "2025"], "Text"),
+            ([None, None], "Text"),
+            (["", "  "], "Text"),
         ],
     )
     def test_classification(self, values, expected):
@@ -139,9 +119,6 @@ class TestFormatBytes:
         assert format_bytes(n_bytes) == expected
 
 
-# ---------------------------------------------------------------------- #
-# Row exploration
-# ---------------------------------------------------------------------- #
 class TestRows:
     def test_head_and_tail(self, dataset):
         assert dataset.get_rows(2, "Head").index.tolist() == [0, 1]
