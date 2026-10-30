@@ -1,6 +1,8 @@
 import sys
 from pathlib import Path
 
+# The tab_* folders sit next to app/, not inside it.
+# This line lets Python find them when we run: streamlit run app/streamlit_app.py
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 import streamlit as st
@@ -8,6 +10,7 @@ import pandas as pd
 from tab_df.display import display_df_tab
 from tab_numeric.display import display_numeric_tab
 
+# Page title and full-width layout
 st.set_page_config(
     page_title="CSV Explorer",
     layout="wide"
@@ -15,6 +18,7 @@ st.set_page_config(
 
 st.title("CSV Explorer")
 
+# Upload section
 with st.expander(
     "Streamlit application for performing data exploration on a CSV",
     expanded=True
@@ -24,6 +28,7 @@ with st.expander(
         type=["csv"]
     )
 
+# Only show the tabs once a CSV has been uploaded
 if uploaded_file is not None:
     try:
         df = pd.read_csv(uploaded_file)

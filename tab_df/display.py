@@ -1,3 +1,6 @@
+# DataFrame tab - everything the user sees.
+# The numbers come from logics.py; this file only decides how to show them.
+
 import html
 
 import pandas as pd
@@ -5,11 +8,13 @@ import streamlit as st
 
 from tab_df.logics import EXPLORATION_METHODS, Dataset, format_bytes
 
+# The slider range asked for in the brief (5 to 50 rows).
 _SLIDER_MIN = 5
 _SLIDER_MAX = 50
 
 _TYPE_ICONS = {"Numeric": "🔢", "Text": "🔤", "Date": "📅", "Boolean": "✅"}
 
+# Colours and fonts for this tab. Change these to restyle the whole tab.
 ACCENT = "#FF7A59"
 ACCENT_2 = "#3EC7B6"
 WARNING = "#F5B942"
@@ -17,6 +22,8 @@ HEADING_FONT = "Space Grotesk"
 BODY_FONT = "Inter"
 MONO_FONT = "JetBrains Mono"
 
+# The look of the tab (CSS). Every rule starts with .st-key-tabdf so it
+# only styles this tab and never changes how the other tabs look.
 _CSS = f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap');
@@ -141,6 +148,7 @@ _CSS = f"""
 """
 
 
+# Called from streamlit_app.py: display_df_tab(df, file_name)
 def display_df_tab(df: pd.DataFrame, file_name: str = "") -> None:
     if df is None:
         st.warning("No data loaded.")
@@ -148,12 +156,14 @@ def display_df_tab(df: pd.DataFrame, file_name: str = "") -> None:
     display_tab_df_content(Dataset.from_dataframe(df, name=file_name))
 
 
+# Draws the four parts of the tab, top to bottom.
 def display_tab_df_content(dataset: Dataset) -> None:
     if dataset.is_df_none():
         st.warning("The uploaded file contains no data to display.")
         return
 
     st.markdown(_CSS, unsafe_allow_html=True)
+    # Everything goes inside this container so the CSS above only applies here.
     with st.container(key="tabdf"):
         _display_hero(dataset)
         display_overall_df(dataset)
@@ -161,7 +171,9 @@ def display_tab_df_content(dataset: Dataset) -> None:
         display_explore_df(dataset)
 
 
+# Banner at the top: file name plus rows, columns and memory.
 def _display_hero(dataset: Dataset) -> None:
+    # escape() stops a strange file name from breaking the page's HTML.
     name = html.escape(dataset.name or "Uploaded dataset")
     chips = [
         (f"{dataset.get_n_rows():,}", "rows"),
@@ -181,6 +193,7 @@ def _display_hero(dataset: Dataset) -> None:
     )
 
 
+# Card 01: the summary table (required by the brief) plus quick health checks.
 def display_overall_df(dataset: Dataset) -> None:
     with st.container(border=True, key="tdfcard_overall"):
         _section_header("01", "Dataset at a glance", "Size and quality of the whole file.")
@@ -206,6 +219,7 @@ def display_overall_df(dataset: Dataset) -> None:
             st.markdown(f'<div class="tdf-pills">{pills}</div>', unsafe_allow_html=True)
 
 
+# Card 02: one row per column with its type, memory and % missing.
 def display_columns_df(dataset: Dataset) -> None:
     with st.container(border=True, key="tdfcard_columns"):
         _section_header(
@@ -222,10 +236,12 @@ def display_columns_df(dataset: Dataset) -> None:
         )
 
 
+# Card 03: slider + Head/Tail/Sample, then shows the chosen rows.
 def display_explore_df(dataset: Dataset) -> None:
     with st.container(border=True, key="tdfcard_explore"):
         _section_header("03", "Explore rows", "Browse the first, last or a random set of rows.")
         n_total = dataset.get_n_rows()
+        # Small files can have fewer than 50 (or even 5) rows, so shrink the range to fit.
         max_rows = min(_SLIDER_MAX, n_total)
         min_rows = min(_SLIDER_MIN, max_rows)
 
@@ -240,6 +256,7 @@ def display_explore_df(dataset: Dataset) -> None:
                     key="tab_df_n_rows",
                 )
             else:
+            # Fewer than 5 rows: a slider can't work, so just show them all.
                 n_rows = max_rows
                 st.caption(f"The dataset only has {max_rows} row(s), so all are shown.")
         with controls_right:
@@ -250,6 +267,7 @@ def display_explore_df(dataset: Dataset) -> None:
                 key="tab_df_method",
             )
             if method == "Sample":
+            # Clicking the button reruns the page, which draws a new random sample.
                 st.button("🔀 Draw a new sample", key="tab_df_resample")
 
         st.markdown(
@@ -259,6 +277,7 @@ def display_explore_df(dataset: Dataset) -> None:
         st.dataframe(dataset.get_rows(n_rows, method))
 
 
+# The numbered heading at the top of each card, e.g. "01  Dataset at a glance".
 def _section_header(number: str, title: str, subtitle: str) -> None:
     st.markdown(
         f"""
@@ -270,6 +289,7 @@ def _section_header(number: str, title: str, subtitle: str) -> None:
     )
 
 
+# Green badge if there are no problems, amber badge with a % if there are.
 def _health_badge(count: int, total: int, singular: str, plural: str) -> str:
     if count == 0:
         return f'<div class="tdf-badge ok"><span class="tdf-dot"></span>No {plural}</div>'
@@ -280,6 +300,7 @@ def _health_badge(count: int, total: int, singular: str, plural: str) -> str:
     )
 
 
+# The small line above the rows table, e.g. "First 5 rows · rows 1–5 of 801".
 def _rows_caption(method: str, n_rows: int, n_total: int) -> str:
     if method == "Head":
         return f"First {n_rows} rows · rows 1–{n_rows} of {n_total:,}"

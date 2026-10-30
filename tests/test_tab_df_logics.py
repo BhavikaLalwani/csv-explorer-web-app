@@ -1,3 +1,6 @@
+# Automated tests for tab_df/logics.py.
+# Run them from the project folder with:  python -m pytest tests -v
+
 import io
 
 import numpy as np
@@ -7,6 +10,8 @@ import pytest
 from tab_df.logics import EXPLORATION_METHODS, Dataset, format_bytes, simple_type
 
 
+# A tiny made-up table where we already know the answers:
+# 6 rows, 1 duplicate (Ann appears twice), and 2 rows with an empty cell.
 @pytest.fixture
 def sample_df() -> pd.DataFrame:
     return pd.DataFrame(
@@ -23,10 +28,12 @@ def dataset(sample_df: pd.DataFrame) -> Dataset:
     return Dataset.from_dataframe(sample_df, name="sample.csv")
 
 
+# Pretends to be a file uploaded through Streamlit.
 def _csv_bytes(text: str, encoding: str = "utf-8") -> io.BytesIO:
     return io.BytesIO(text.encode(encoding))
 
 
+# Does reading a CSV work, including awkward files?
 class TestLoading:
     def test_loads_utf8_csv(self):
         ds = Dataset(_csv_bytes("a,b\n1,x\n2,y\n"))
@@ -52,6 +59,7 @@ class TestLoading:
         assert Dataset.from_dataframe(pd.DataFrame()).is_df_none()
 
 
+# Are the numbers in the summary table correct?
 class TestSummary:
     def test_counts(self, dataset):
         assert dataset.get_n_rows() == 6
@@ -68,6 +76,7 @@ class TestSummary:
         assert Dataset().get_summary_df()["Value"].tolist() == [0, 0, 0, 0]
 
 
+# Is the column information (type, memory, % missing) correct?
 class TestColumns:
     def test_cols_dtype_lists_every_column_then_index(self, dataset):
         table = dataset.get_cols_dtype()
@@ -89,6 +98,7 @@ class TestColumns:
         assert dataset.get_type_counts() == {"Text": 1, "Numeric": 1, "Date": 1}
 
 
+# Does each kind of column get the right label?
 class TestSimpleType:
     @pytest.mark.parametrize(
         "values, expected",
@@ -110,6 +120,7 @@ class TestSimpleType:
         assert simple_type(pd.Series(pd.to_datetime(["2024-01-01"]))) == "Date"
 
 
+# Are byte sizes turned into readable text correctly?
 class TestFormatBytes:
     @pytest.mark.parametrize(
         "n_bytes, expected",
@@ -119,6 +130,7 @@ class TestFormatBytes:
         assert format_bytes(n_bytes) == expected
 
 
+# Do Head, Tail and Sample return the right rows?
 class TestRows:
     def test_head_and_tail(self, dataset):
         assert dataset.get_rows(2, "Head").index.tolist() == [0, 1]
