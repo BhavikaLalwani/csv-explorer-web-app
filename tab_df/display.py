@@ -1,17 +1,5 @@
-"""Streamlit rendering for the DataFrame tab.
-
-All calculations live in ``tab_df/logics.py``; this module only draws them.
-The tab is laid out as a banner followed by three numbered cards:
-
-01. Dataset at a glance  - summary table + data health checks
-02. Column structure     - per-column type, dtype, memory and missing %
-03. Explore rows         - slider + Head/Tail/Sample selector + rows table
-
-Styling: every element of this tab sits inside a container with the key
-``tabdf``. Streamlit gives that container the CSS class ``st-key-tabdf``, and
-all the CSS below is prefixed with it, so the custom look only applies to
-this tab and never leaks into the other tabs.
-"""
+# DataFrame tab - everything the user sees.
+# The numbers come from logics.py; this file only decides how to show them.
 
 import html
 
@@ -20,33 +8,30 @@ import streamlit as st
 
 from tab_df.logics import EXPLORATION_METHODS, Dataset, format_bytes
 
+# The slider range asked for in the brief (5 to 50 rows).
 _SLIDER_MIN = 5
 _SLIDER_MAX = 50
 
-# Icons shown next to each simple column type.
 _TYPE_ICONS = {"Numeric": "🔢", "Text": "🔤", "Date": "📅", "Boolean": "✅"}
 
-# ---------------------------------------------------------------------- #
-# Theme
-# ---------------------------------------------------------------------- #
-# Change these to restyle the whole tab.
-ACCENT = "#FF7A59"        # coral: headings, numbers, highlights
-ACCENT_2 = "#3EC7B6"      # teal: "all good" states, secondary highlights
-WARNING = "#F5B942"       # amber: data quality warnings
+# Colours and fonts for this tab. Change these to restyle the whole tab.
+ACCENT = "#FF7A59"
+ACCENT_2 = "#3EC7B6"
+WARNING = "#F5B942"
 HEADING_FONT = "Space Grotesk"
 BODY_FONT = "Inter"
 MONO_FONT = "JetBrains Mono"
 
+# The look of the tab (CSS). Every rule starts with .st-key-tabdf so it
+# only styles this tab and never changes how the other tabs look.
 _CSS = f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap');
 
-/* ---- Base font for everything in this tab ---- */
 .st-key-tabdf, .st-key-tabdf p, .st-key-tabdf label, .st-key-tabdf td, .st-key-tabdf th {{
     font-family: '{BODY_FONT}', sans-serif;
 }}
 
-/* ---- Banner ---- */
 .st-key-tabdf .tdf-hero {{
     background: linear-gradient(120deg, #1B1F3B 0%, #2B1F3F 55%, #4A2333 100%);
     border: 1px solid rgba(255,255,255,0.08);
@@ -87,14 +72,12 @@ _CSS = f"""
     margin-right: 4px;
 }}
 
-/* ---- Cards ---- */
 .st-key-tabdf [class*="st-key-tdfcard"] {{
     border-radius: 16px;
     border-color: rgba(128,128,128,0.25);
     background: rgba(128,128,128,0.04);
 }}
 
-/* ---- Section headers ---- */
 .st-key-tabdf .tdf-section {{ display: flex; align-items: baseline; gap: 14px; margin: 4px 0 2px 0; }}
 .st-key-tabdf .tdf-num {{
     font-family: '{MONO_FONT}', monospace;
@@ -118,7 +101,6 @@ _CSS = f"""
     margin: 6px 0 8px 0;
 }}
 
-/* ---- Static tables ---- */
 .st-key-tabdf [data-testid="stTable"] thead th {{
     font-family: '{MONO_FONT}', monospace;
     font-size: 0.72rem;
@@ -126,14 +108,12 @@ _CSS = f"""
     text-transform: uppercase;
     color: {ACCENT};
 }}
-/* Row labels (column names, descriptions): keep their real spelling. */
 .st-key-tabdf [data-testid="stTable"] tbody th {{
     font-weight: 600;
     font-size: 0.9rem;
 }}
 .st-key-tabdf [data-testid="stTable"] td {{ font-size: 0.9rem; }}
 
-/* ---- Health badges ---- */
 .st-key-tabdf .tdf-badge {{
     display: flex; align-items: center; gap: 10px;
     border-radius: 12px;
@@ -148,7 +128,6 @@ _CSS = f"""
 .st-key-tabdf .warn .tdf-dot {{ background: {WARNING}; }}
 .st-key-tabdf .tdf-badge b {{ font-family: '{MONO_FONT}', monospace; }}
 
-/* ---- Column type pills ---- */
 .st-key-tabdf .tdf-pills {{ display: flex; flex-wrap: wrap; gap: 8px; }}
 .st-key-tabdf .tdf-pill {{
     border: 1px solid rgba(128,128,128,0.35);
@@ -158,7 +137,6 @@ _CSS = f"""
 }}
 .st-key-tabdf .tdf-pill b {{ font-family: '{MONO_FONT}', monospace; color: {ACCENT}; }}
 
-/* ---- Widgets ---- */
 .st-key-tabdf [data-testid="stWidgetLabel"] p {{ font-weight: 600; }}
 .st-key-tabdf .tdf-rows-info {{
     font-family: '{MONO_FONT}', monospace;
@@ -170,31 +148,22 @@ _CSS = f"""
 """
 
 
-# ---------------------------------------------------------------------- #
-# Entry points
-# ---------------------------------------------------------------------- #
+# Called from streamlit_app.py: display_df_tab(df, file_name)
 def display_df_tab(df: pd.DataFrame, file_name: str = "") -> None:
-    """Render the DataFrame tab from a DataFrame loaded by streamlit_app.py.
-
-    Matches the team convention (``display_numeric_tab(df)`` etc.).
-
-    Args:
-        df: The uploaded CSV as a DataFrame.
-        file_name: Optional file name shown in the banner.
-    """
     if df is None:
         st.warning("No data loaded.")
         return
     display_tab_df_content(Dataset.from_dataframe(df, name=file_name))
 
 
+# Draws the four parts of the tab, top to bottom.
 def display_tab_df_content(dataset: Dataset) -> None:
-    """Render the whole DataFrame tab for an already loaded ``Dataset``."""
     if dataset.is_df_none():
         st.warning("The uploaded file contains no data to display.")
         return
 
     st.markdown(_CSS, unsafe_allow_html=True)
+    # Everything goes inside this container so the CSS above only applies here.
     with st.container(key="tabdf"):
         _display_hero(dataset)
         display_overall_df(dataset)
@@ -202,12 +171,10 @@ def display_tab_df_content(dataset: Dataset) -> None:
         display_explore_df(dataset)
 
 
-# ---------------------------------------------------------------------- #
-# Sections
-# ---------------------------------------------------------------------- #
+# Banner at the top: file name plus rows, columns and memory.
 def _display_hero(dataset: Dataset) -> None:
-    """Banner with the file name and headline numbers."""
-    name = html.escape(dataset.name or "Uploaded dataset")  # never trust file names
+    # escape() stops a strange file name from breaking the page's HTML.
+    name = html.escape(dataset.name or "Uploaded dataset")
     chips = [
         (f"{dataset.get_n_rows():,}", "rows"),
         (f"{dataset.get_n_cols():,}", "columns"),
@@ -226,8 +193,8 @@ def _display_hero(dataset: Dataset) -> None:
     )
 
 
+# Card 01: the summary table (required by the brief) plus quick health checks.
 def display_overall_df(dataset: Dataset) -> None:
-    """Card 01: static summary table next to automatic data health checks."""
     with st.container(border=True, key="tdfcard_overall"):
         _section_header("01", "Dataset at a glance", "Size and quality of the whole file.")
         left, right = st.columns([3, 2], gap="large")
@@ -252,8 +219,8 @@ def display_overall_df(dataset: Dataset) -> None:
             st.markdown(f'<div class="tdf-pills">{pills}</div>', unsafe_allow_html=True)
 
 
+# Card 02: one row per column with its type, memory and % missing.
 def display_columns_df(dataset: Dataset) -> None:
-    """Card 02: static table of every column's type, memory and missing share."""
     with st.container(border=True, key="tdfcard_columns"):
         _section_header(
             "02",
@@ -269,11 +236,12 @@ def display_columns_df(dataset: Dataset) -> None:
         )
 
 
+# Card 03: slider + Head/Tail/Sample, then shows the chosen rows.
 def display_explore_df(dataset: Dataset) -> None:
-    """Card 03: choose how many rows and which rows to look at."""
     with st.container(border=True, key="tdfcard_explore"):
         _section_header("03", "Explore rows", "Browse the first, last or a random set of rows.")
         n_total = dataset.get_n_rows()
+        # Small files can have fewer than 50 (or even 5) rows, so shrink the range to fit.
         max_rows = min(_SLIDER_MAX, n_total)
         min_rows = min(_SLIDER_MIN, max_rows)
 
@@ -288,7 +256,7 @@ def display_explore_df(dataset: Dataset) -> None:
                     key="tab_df_n_rows",
                 )
             else:
-                # Too few rows for a slider range; show them all.
+            # Fewer than 5 rows: a slider can't work, so just show them all.
                 n_rows = max_rows
                 st.caption(f"The dataset only has {max_rows} row(s), so all are shown.")
         with controls_right:
@@ -299,6 +267,7 @@ def display_explore_df(dataset: Dataset) -> None:
                 key="tab_df_method",
             )
             if method == "Sample":
+            # Clicking the button reruns the page, which draws a new random sample.
                 st.button("🔀 Draw a new sample", key="tab_df_resample")
 
         st.markdown(
@@ -308,11 +277,8 @@ def display_explore_df(dataset: Dataset) -> None:
         st.dataframe(dataset.get_rows(n_rows, method))
 
 
-# ---------------------------------------------------------------------- #
-# Small HTML helpers
-# ---------------------------------------------------------------------- #
+# The numbered heading at the top of each card, e.g. "01  Dataset at a glance".
 def _section_header(number: str, title: str, subtitle: str) -> None:
-    """Numbered card heading, e.g. "01  Dataset at a glance"."""
     st.markdown(
         f"""
         <div class="tdf-section"><span class="tdf-num">{number}</span>
@@ -323,8 +289,8 @@ def _section_header(number: str, title: str, subtitle: str) -> None:
     )
 
 
+# Green badge if there are no problems, amber badge with a % if there are.
 def _health_badge(count: int, total: int, singular: str, plural: str) -> str:
-    """HTML badge: teal when ``count`` is zero, amber with a % otherwise."""
     if count == 0:
         return f'<div class="tdf-badge ok"><span class="tdf-dot"></span>No {plural}</div>'
     label = singular if count == 1 else plural
@@ -334,8 +300,8 @@ def _health_badge(count: int, total: int, singular: str, plural: str) -> str:
     )
 
 
+# The small line above the rows table, e.g. "First 5 rows · rows 1–5 of 801".
 def _rows_caption(method: str, n_rows: int, n_total: int) -> str:
-    """Describe which rows are currently shown, e.g. "rows 1–5 of 801"."""
     if method == "Head":
         return f"First {n_rows} rows · rows 1–{n_rows} of {n_total:,}"
     if method == "Tail":
