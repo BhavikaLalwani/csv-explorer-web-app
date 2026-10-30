@@ -1,7 +1,13 @@
+import sys
+from pathlib import Path
 
-import streamlit as st
-import pandas as pd
-from tab_numeric.display import display_numeric_tab
+# Let Python find the tab_* folders, which sit next to app/.
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
+import streamlit as st  # noqa: E402
+import pandas as pd  # noqa: E402
+from tab_df.display import display_df_tab  # noqa: E402
+from tab_numeric.display import display_numeric_tab  # noqa: E402
 
 # Configure the application
 st.set_page_config(
@@ -38,7 +44,7 @@ if uploaded_file is not None:
         ])
 
         with tab_df:
-            st.info("DataFrame analysis coming soon.")
+            display_df_tab(df, uploaded_file.name)
 
         with tab_numeric:
             display_numeric_tab(df)
