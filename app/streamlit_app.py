@@ -9,6 +9,7 @@ import streamlit as st
 import pandas as pd
 from tab_df.display import display_df_tab
 from tab_numeric.display import display_numeric_tab
+from tab_text.display import display_text_analysis
 
 # Page title and full-width layout
 st.set_page_config(
@@ -51,7 +52,7 @@ if uploaded_file is not None:
             display_numeric_tab(df)
 
         with tab_text:
-            st.info("Text analysis coming soon.")
+            display_text_analysis(df)
 
         with tab_datetime:
             st.info("Datetime analysis coming soon.")
