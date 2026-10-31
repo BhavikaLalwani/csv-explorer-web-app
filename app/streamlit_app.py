@@ -10,6 +10,7 @@ import pandas as pd
 from tab_df.display import display_df_tab
 from tab_numeric.display import display_numeric_tab
 from tab_date.display import show_datetime_tab
+from tab_text.display import display_text_analysis
 
 # Page title and full-width layout
 st.set_page_config(
@@ -40,9 +41,9 @@ if uploaded_file is not None:
     else:
         tab_df, tab_numeric, tab_text, tab_datetime = st.tabs([
             "DataFrame",
-            "Numeric Serie",
-            "Text Serie",
-            "Datetime Serie"
+            "Numeric Series",
+            "Text Series",
+            "Datetime Series"
         ])
 
         with tab_df:
@@ -52,7 +53,7 @@ if uploaded_file is not None:
             display_numeric_tab(df)
 
         with tab_text:
-            st.info("Text analysis coming soon.")
+            display_text_analysis(df)
 
         with tab_datetime:
             show_datetime_tab(df)
